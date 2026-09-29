@@ -1,0 +1,1926 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>학교 생활 잘하기</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts (Noto Sans KR) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .smooth-scroll {
+      -webkit-overflow-scrolling: touch;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .modal-enter {
+      animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .fade-enter {
+      animation: fadeIn 0.2s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col justify-between items-center selection:bg-indigo-500 selection:text-white">
+
+  <!-- 메인 모바일 앱 래퍼 -->
+  <div class="w-full max-w-md bg-white min-h-screen shadow-2xl flex flex-col relative pb-28">
+    
+    <!-- 1. 상단: 앱 헤더 (앱이름: 학교 생활 잘하기) -->
+    <header class="sticky top-0 z-20 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-5 pt-6 pb-4 rounded-b-3xl shadow-md transition-all">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 bg-white/15 backdrop-blur-md rounded-2xl shadow-inner border border-white/20">
+            <span class="text-2xl">🎓</span>
+          </div>
+          <div>
+            <h1 class="text-xl font-extrabold tracking-tight">학교 생활 잘하기</h1>
+            <p class="text-xs text-indigo-100 font-medium" id="todayText">오늘 날짜 로딩 중...</p>
+          </div>
+        </div>
+
+        <!-- 보기 모드 / 정렬 토글 -->
+        <div id="assignmentHeaderControls" class="flex items-center">
+          <button id="sortToggleBtn" class="px-3 py-1.5 bg-indigo-800/60 active:bg-indigo-900 rounded-full text-xs font-semibold flex items-center gap-1 border border-indigo-400/30">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+            </svg>
+            <span id="sortLabel">마감임박순</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 상단 메인 내비게이션 탭 (과제·시험 / 성적 관리 / 마일리지 관리) -->
+      <nav class="grid grid-cols-4 p-1 bg-indigo-950/30 rounded-2xl gap-1 border border-white/10 backdrop-blur">
+        <button id="tabScheduleBtn" class="py-2 text-[10px] sm:text-xs font-bold rounded-xl transition flex items-center justify-center gap-0.5 sm:gap-1 bg-white text-indigo-700 shadow-sm">
+          <span>⏰</span> 수업·시간표
+        </button>
+        <button id="tabTasksBtn" class="py-2 text-[10px] sm:text-xs font-bold rounded-xl transition flex items-center justify-center gap-0.5 sm:gap-1 text-indigo-100 hover:text-white">
+          <span>📅</span> 과제·시험
+        </button>
+        <button id="tabGradesBtn" class="py-2 text-[10px] sm:text-xs font-bold rounded-xl transition flex items-center justify-center gap-0.5 sm:gap-1 text-indigo-100 hover:text-white">
+          <span>📊</span> 성적 관리
+        </button>
+        <button id="tabMileageBtn" class="py-2 text-[10px] sm:text-xs font-bold rounded-xl transition flex items-center justify-center gap-0.5 sm:gap-1 text-indigo-100 hover:text-white">
+          <span>🏆</span> 마일리지
+        </button>
+      </nav>
+
+      <!-- 수업·시간표 뷰 요약 통계 바 -->
+      <div id="scheduleSummaryBar" class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-indigo-400/30 text-center">
+        <div class="bg-indigo-800/40 py-1.5 rounded-xl border border-indigo-400/20">
+          <p class="text-[10px] text-indigo-200 uppercase font-medium">오늘 예정 수업</p>
+          <p class="text-base font-extrabold text-white" id="todayClassCount">0건</p>
+        </div>
+        <div class="bg-emerald-500/30 py-1.5 rounded-xl border border-emerald-400/30">
+          <p class="text-[10px] text-emerald-200 uppercase font-medium">정규 교과</p>
+          <p class="text-base font-extrabold text-emerald-100" id="regularCourseCount">0개</p>
+        </div>
+        <div class="bg-amber-500/30 py-1.5 rounded-xl border border-amber-400/30">
+          <p class="text-[10px] text-amber-200 uppercase font-medium">학과외/비교과</p>
+          <p class="text-base font-extrabold text-amber-100" id="extraCourseCount">0개</p>
+        </div>
+      </div>
+
+      <!-- 과제 뷰 요약 통계 바 -->
+      <div id="tasksSummaryBar" class="hidden grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-indigo-400/30 text-center">
+        <div class="bg-indigo-800/40 py-1.5 rounded-xl border border-indigo-400/20">
+          <p class="text-[10px] text-indigo-200 uppercase font-medium">전체 과제</p>
+          <p class="text-base font-extrabold text-white" id="countTotal">0</p>
+        </div>
+        <div class="bg-rose-500/30 py-1.5 rounded-xl border border-rose-400/30">
+          <p class="text-[10px] text-rose-200 uppercase font-medium">긴급/오늘</p>
+          <p class="text-base font-extrabold text-rose-100" id="countUrgent">0</p>
+        </div>
+        <div class="bg-emerald-500/30 py-1.5 rounded-xl border border-emerald-400/30">
+          <p class="text-[10px] text-emerald-200 uppercase font-medium">완료</p>
+          <p class="text-base font-extrabold text-emerald-100" id="countDone">0</p>
+        </div>
+      </div>
+
+      <!-- 성적 뷰 요약 통계 바 (기본 숨김) -->
+      <div id="gradesSummaryBar" class="hidden grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-indigo-400/30 text-center">
+        <div class="bg-indigo-800/40 py-1.5 rounded-xl border border-indigo-400/20">
+          <p class="text-[10px] text-indigo-200 uppercase font-medium">취득 학점</p>
+          <p class="text-base font-extrabold text-white"><span id="totalCreditsText">0</span> 학점</p>
+        </div>
+        <div class="bg-amber-500/30 py-1.5 rounded-xl border border-amber-400/30">
+          <p class="text-[10px] text-amber-200 uppercase font-medium">평균 평점 (4.5)</p>
+          <p class="text-base font-extrabold text-amber-100" id="gpaText">0.00</p>
+        </div>
+        <div class="bg-emerald-500/30 py-1.5 rounded-xl border border-emerald-400/30">
+          <p class="text-[10px] text-emerald-200 uppercase font-medium">과목 수</p>
+          <p class="text-base font-extrabold text-emerald-100"><span id="courseCountText">0</span>개</p>
+        </div>
+      </div>
+
+      <!-- 마일리지 뷰 요약 통계 바 (기본 숨김) -->
+      <div id="mileageSummaryBar" class="hidden grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-indigo-400/30 text-center">
+        <div class="bg-indigo-800/40 py-1.5 rounded-xl border border-indigo-400/20">
+          <p class="text-[10px] text-indigo-200 uppercase font-medium">현재 점수</p>
+          <p class="text-base font-extrabold text-white"><span id="mileageTotalScore">0</span>점</p>
+        </div>
+        <div class="bg-rose-500/30 py-1.5 rounded-xl border border-rose-400/30">
+          <p class="text-[10px] text-rose-200 uppercase font-medium">부족한 점수</p>
+          <p class="text-base font-extrabold text-rose-100"><span id="mileageNeedScore">0</span>점</p>
+        </div>
+        <div class="bg-amber-500/30 py-1.5 rounded-xl border border-amber-400/30">
+          <p class="text-[10px] text-amber-200 uppercase font-medium">달성률</p>
+          <p class="text-base font-extrabold text-amber-100"><span id="mileageRateText">0</span>%</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. 가운데: 탭별 콘텐츠 영역 -->
+    <main class="flex-1 px-4 py-4 overflow-y-auto smooth-scroll">
+      
+      <!-- ================= [0] 수업 일정 / 교과 및 학과외 과목 관리 영역 ================= -->
+      <section id="scheduleSection" class="space-y-4">
+        <!-- 오늘 가야 할 수업 실시간 알림 카드 -->
+        <div class="bg-gradient-to-br from-indigo-900 to-indigo-700 text-white rounded-2xl p-4 shadow-md relative overflow-hidden">
+          <div class="absolute -right-4 -bottom-4 text-7xl opacity-10 pointer-events-none">🏫</div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-bold bg-white/20 px-2 py-0.5 rounded-md backdrop-blur border border-white/20" id="scheduleTodayDayBadge">오늘의 수업 브리핑</span>
+            <span class="text-xs text-indigo-100 font-medium" id="scheduleCurrentTime">--:--</span>
+          </div>
+          <h2 class="text-lg font-black" id="scheduleHighlightTitle">오늘 남은 수업 확인 중...</h2>
+          <p class="text-xs text-indigo-100 mt-1" id="scheduleHighlightDesc">강의실과 시간을 확인하고 준비하세요.</p>
+        </div>
+
+        <!-- 보기 옵션: 오늘 가야할 수업 vs 요일별 전체 시간표 vs 과목 분류 -->
+        <div class="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl">
+          <button class="sched-filter-btn flex-1 py-1.5 text-xs font-semibold rounded-lg bg-white text-indigo-700 shadow-sm transition" data-view="today">오늘 수업</button>
+          <button class="sched-filter-btn flex-1 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 transition" data-view="week">이번 주 시간표</button>
+          <button class="sched-filter-btn flex-1 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 transition" data-view="all">전체 과목 (교과/학과외)</button>
+        </div>
+
+        <!-- 주간 요일 선택 바 (week 뷰 선택 시 표시) -->
+        <div id="daySelectorContainer" class="hidden grid grid-cols-6 gap-1 p-1 bg-white border border-slate-200 rounded-xl text-center">
+          <button class="day-tab py-1.5 text-xs font-bold rounded-lg text-slate-600 hover:bg-slate-100 transition" data-day="월">월</button>
+          <button class="day-tab py-1.5 text-xs font-bold rounded-lg text-slate-600 hover:bg-slate-100 transition" data-day="화">화</button>
+          <button class="day-tab py-1.5 text-xs font-bold rounded-lg text-slate-600 hover:bg-slate-100 transition" data-day="수">수</button>
+          <button class="day-tab py-1.5 text-xs font-bold rounded-lg text-slate-600 hover:bg-slate-100 transition" data-day="목">목</button>
+          <button class="day-tab py-1.5 text-xs font-bold rounded-lg text-slate-600 hover:bg-slate-100 transition" data-day="금">금</button>
+          <button class="day-tab py-1.5 text-xs font-bold rounded-lg text-slate-600 hover:bg-slate-100 transition" data-day="토">토</button>
+        </div>
+
+        <!-- 수업 리스트 표시 영역 -->
+        <div id="scheduleList" class="space-y-3">
+          <!-- JS 동적 렌더링 -->
+        </div>
+
+        <!-- 수업 목록 비었을 때 -->
+        <div id="scheduleEmptyState" class="hidden flex-col items-center justify-center py-14 text-center text-slate-400">
+          <div class="w-16 h-16 mb-3 rounded-2xl bg-indigo-50 flex items-center justify-center text-2xl">
+            ⏰
+          </div>
+          <p class="text-sm font-semibold text-slate-700" id="scheduleEmptyTitle">등록된 수업 일정이 없습니다</p>
+          <p class="text-xs mt-1 text-slate-400" id="scheduleEmptySub">하단 버튼을 눌러 정규 교과 및 학과외 신청 과목을 추가해보세요!</p>
+        </div>
+      </section>
+
+      <!-- ================= [1] 과제 / 시험 마감 관리 영역 ================= -->
+      <section id="tasksSection" class="hidden space-y-4">
+        <!-- 필터 탭 (전체 / 진행 중 / 완료됨) -->
+        <div class="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl">
+          <button class="filter-btn flex-1 py-1.5 text-xs font-semibold rounded-lg bg-white text-indigo-700 shadow-sm transition" data-filter="all">전체</button>
+          <button class="filter-btn flex-1 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 transition" data-filter="active">진행 중</button>
+          <button class="filter-btn flex-1 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 transition" data-filter="completed">완료됨</button>
+        </div>
+
+        <!-- 과제 카드 리스트 -->
+        <div id="assignmentList" class="space-y-3">
+          <!-- JS로 동적 렌더링 -->
+        </div>
+
+        <!-- 과제 목록 비었을 때 -->
+        <div id="tasksEmptyState" class="hidden flex-col items-center justify-center py-14 text-center text-slate-400">
+          <div class="w-16 h-16 mb-3 rounded-2xl bg-indigo-50 flex items-center justify-center text-2xl">
+            📝
+          </div>
+          <p class="text-sm font-semibold text-slate-700">남은 일정이나 과제가 없습니다</p>
+          <p class="text-xs mt-1 text-slate-400">아래 버튼을 눌러 새 일정이나 과제를 추가해보세요!</p>
+        </div>
+      </section>
+
+      <!-- ================= [2] 학과 성적 / 점수 관리 영역 ================= -->
+      <section id="gradesSection" class="hidden space-y-4">
+        <!-- 학기 필터 및 GPA 요약 카드 -->
+        <div class="bg-gradient-to-br from-indigo-50 to-slate-50 rounded-2xl p-4 border border-indigo-100 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <span class="text-xs font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-md">성적표</span>
+              <h2 class="text-base font-bold text-slate-800 mt-1">이번 학기 학점 성적</h2>
+            </div>
+            <!-- 학점 기준 선택 (4.5 / 4.3) -->
+            <select id="gradeScaleSelect" class="text-xs bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="4.5">4.5 만점 기준</option>
+              <option value="4.3">4.3 만점 기준</option>
+            </select>
+          </div>
+
+          <!-- 평점 게이지 바 -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs font-semibold">
+              <span class="text-slate-500">누적 평균 평점</span>
+              <span class="text-indigo-600 font-extrabold" id="gpaProgressText">0.00 / 4.50</span>
+            </div>
+            <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+              <div id="gpaProgressBar" class="bg-indigo-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 성적 과목 리스트 -->
+        <div id="gradesList" class="space-y-3">
+          <!-- JS로 동적 렌더링 -->
+        </div>
+
+        <!-- 성적 목록 비었을 때 -->
+        <div id="gradesEmptyState" class="hidden flex-col items-center justify-center py-14 text-center text-slate-400">
+          <div class="w-16 h-16 mb-3 rounded-2xl bg-amber-50 flex items-center justify-center text-2xl">
+            💯
+          </div>
+          <p class="text-sm font-semibold text-slate-700">등록된 수강 과목 성적이 없습니다</p>
+          <p class="text-xs mt-1 text-slate-400">하단 버튼을 눌러 수강 과목과 학점(등급)을 입력하세요.</p>
+        </div>
+      </section>
+
+      <!-- ================= [3] 마일리지 관리 영역 (100점 기준 바 & 부족점수 시각화) ================= -->
+      <section id="mileageSection" class="hidden space-y-4">
+        <!-- 메인 100점 바 및 종합 상태 카드 -->
+        <div class="bg-gradient-to-br from-white to-indigo-50/50 rounded-2xl p-4 border border-indigo-100 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-[11px] font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-md">종합 마일리지 진척도</span>
+              <h2 class="text-base font-extrabold text-slate-800 mt-1">목표 100점 달성 현황</h2>
+            </div>
+            <div id="mileageLevelBadge" class="px-2.5 py-1 rounded-full text-xs font-black bg-indigo-600 text-white shadow-xs">
+              진행 중
+            </div>
+          </div>
+
+          <!-- 100점 대형 바 게이지 -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between items-baseline text-xs">
+              <span class="font-bold text-slate-500">현재 누적 점수</span>
+              <span class="text-indigo-700 font-black text-lg"><span id="mileageScoreDisplay">0</span> <span class="text-xs font-normal text-slate-500">/ 100점</span></span>
+            </div>
+            <div class="w-full bg-slate-200 h-3.5 rounded-full overflow-hidden p-0.5">
+              <div id="mileageMainProgressBar" class="bg-gradient-to-r from-indigo-500 via-indigo-600 to-indigo-700 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- 상태 분석 및 부족 점수 카드 -->
+          <div class="bg-white rounded-xl p-3 border border-indigo-100/80 flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5">
+              <span class="text-2xl" id="mileageStatusIcon">💡</span>
+              <div>
+                <p class="text-xs font-bold text-slate-800" id="mileageStatusTitle">마일리지 현황을 분석 중입니다</p>
+                <p class="text-[11px] text-slate-400" id="mileageStatusDesc">부족한 영역을 채워 목표 100점을 완성하세요.</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] text-slate-400 font-medium block">목표 잔여</span>
+              <span id="mileageRemainPoints" class="text-base font-black text-rose-500">-100점</span>
+            </div>
+          </div>
+
+          <!-- 4개 영역별 진척 바 (학업, 비교과, 봉사, 대회) -->
+          <div class="pt-2 border-t border-slate-100">
+            <p class="text-xs font-bold text-slate-700 mb-2 flex items-center justify-between">
+              <span>영역별 획득 분석 (각 25점 기준)</span>
+              <span class="text-[11px] font-normal text-indigo-600">균형 진단</span>
+            </p>
+            <div id="categoryProgressContainer" class="space-y-2.5">
+              <!-- JS로 영역별 게이지 렌더링 -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 마일리지 활동 목록 헤더 -->
+        <div class="flex items-center justify-between px-1">
+          <h3 class="text-xs font-bold text-slate-600">마일리지 획득 내역 (<span id="mileageCountText">0</span>건)</h3>
+        </div>
+
+        <!-- 마일리지 목록 -->
+        <div id="mileageList" class="space-y-2.5">
+          <!-- JS로 동적 렌더링 -->
+        </div>
+
+        <!-- 마일리지 목록 비었을 때 -->
+        <div id="mileageEmptyState" class="hidden flex-col items-center justify-center py-12 text-center text-slate-400">
+          <div class="w-16 h-16 mb-3 rounded-2xl bg-amber-50 flex items-center justify-center text-2xl">
+            🏆
+          </div>
+          <p class="text-sm font-semibold text-slate-700">등록된 마일리지 활동이 없습니다</p>
+          <p class="text-xs mt-1 text-slate-400">하단 버튼을 눌러 비교과 프로그램이나 자격증, 봉사활동을 등록하세요.</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- 3. 하단 고정 액션 버튼 -->
+    <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-4 bg-gradient-to-t from-white via-white/95 to-transparent backdrop-blur-sm z-30">
+      <button id="mainActionBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 px-5 rounded-2xl shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition duration-200">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+        <span id="mainActionText">새 수업·과목 일정 등록하기</span>
+      </button>
+    </div>
+
+    <!-- [모달 0] 수업 / 과목 일정 추가 모달 -->
+    <div id="addScheduleModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
+      <div class="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl modal-enter max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+          <h2 class="text-lg font-bold text-slate-800">새 수업 / 과목 일정 등록</h2>
+          <button id="closeScheduleModalBtn" class="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <form id="scheduleForm" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">과목 구분 <span class="text-rose-500">*</span></label>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="cursor-pointer">
+                <input type="radio" name="courseCategory" value="regular" checked class="peer sr-only">
+                <div class="py-2.5 px-3 rounded-xl border border-slate-200 peer-checked:bg-indigo-50 peer-checked:border-indigo-500 peer-checked:text-indigo-700 text-xs font-bold flex items-center justify-center gap-1.5 transition">
+                  <span>🏫</span> 정규 교과 수업
+                </div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="courseCategory" value="extracurricular" class="peer sr-only">
+                <div class="py-2.5 px-3 rounded-xl border border-slate-200 peer-checked:bg-amber-50 peer-checked:border-amber-500 peer-checked:text-amber-800 text-xs font-bold flex items-center justify-center gap-1.5 transition">
+                  <span>🌐</span> 학과외/비교과 신청
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label for="schedSubject" class="block text-xs font-bold text-slate-700 mb-1.5">과목/프로그램명 <span class="text-rose-500">*</span></label>
+            <input type="text" id="schedSubject" placeholder="예: 객체지향프로그래밍, 파이썬 데이터분석 특강" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" required>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="schedDay" class="block text-xs font-bold text-slate-700 mb-1.5">수업 요일 <span class="text-rose-500">*</span></label>
+              <select id="schedDay" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-bold text-slate-700" required>
+                <option value="월">월요일</option>
+                <option value="화">화요일</option>
+                <option value="수">수요일</option>
+                <option value="목">목요일</option>
+                <option value="금">금요일</option>
+                <option value="토">토요일</option>
+                <option value="일">일요일</option>
+              </select>
+            </div>
+            <div>
+              <label for="schedRoom" class="block text-xs font-bold text-slate-700 mb-1.5">강의실 / 장소 <span class="text-rose-500">*</span></label>
+              <input type="text" id="schedRoom" placeholder="예: 공학관 302호, 온라인 ZOOM" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" required>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="schedStartTime" class="block text-xs font-bold text-slate-700 mb-1.5">시작 시간 <span class="text-rose-500">*</span></label>
+              <input type="time" id="schedStartTime" value="09:00" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" required>
+            </div>
+            <div>
+              <label for="schedEndTime" class="block text-xs font-bold text-slate-700 mb-1.5">종료 시간 <span class="text-rose-500">*</span></label>
+              <input type="time" id="schedEndTime" value="10:50" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" required>
+            </div>
+          </div>
+
+          <div>
+            <label for="schedInstructor" class="block text-xs font-bold text-slate-700 mb-1.5">교수자 / 담당자 <span class="text-slate-400 font-normal">(선택)</span></label>
+            <input type="text" id="schedInstructor" placeholder="예: 김교수님, 취창업지원센터" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+          </div>
+
+          <div class="pt-2">
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition">
+              수업 일정 등록
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- [모달 1] 과제/시험 일정 추가 모달 -->
+    <div id="addTaskModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
+      <div class="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl modal-enter max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+          <h2 class="text-lg font-bold text-slate-800">새 일정 / 과제 등록</h2>
+          <button id="closeTaskModalBtn" class="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <form id="taskForm" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">일정 유형 <span class="text-rose-500">*</span></label>
+            <div class="grid grid-cols-4 gap-2">
+              <label class="cursor-pointer">
+                <input type="radio" name="itemType" value="assignment" checked class="peer sr-only">
+                <div class="flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-slate-200 peer-checked:bg-indigo-50 peer-checked:border-indigo-500 peer-checked:text-indigo-700 transition">
+                  <span class="text-lg mb-0.5">📝</span>
+                  <span class="text-xs font-semibold">과제</span>
+                </div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="itemType" value="exam" class="peer sr-only">
+                <div class="flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-slate-200 peer-checked:bg-rose-50 peer-checked:border-rose-500 peer-checked:text-rose-700 transition">
+                  <span class="text-lg mb-0.5">🎯</span>
+                  <span class="text-xs font-semibold">시험</span>
+                </div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="itemType" value="quiz" class="peer sr-only">
+                <div class="flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-slate-200 peer-checked:bg-amber-50 peer-checked:border-amber-500 peer-checked:text-amber-800 transition">
+                  <span class="text-lg mb-0.5">💡</span>
+                  <span class="text-xs font-semibold">퀴즈</span>
+                </div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="itemType" value="project" class="peer sr-only">
+                <div class="flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-slate-200 peer-checked:bg-emerald-50 peer-checked:border-emerald-500 peer-checked:text-emerald-700 transition">
+                  <span class="text-lg mb-0.5">🚀</span>
+                  <span class="text-xs font-semibold">프로젝트</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label for="taskSubject" class="block text-xs font-bold text-slate-700 mb-1.5">과목명 <span class="text-rose-500">*</span></label>
+            <input type="text" id="taskSubject" placeholder="예: 자료구조, 경제학원론" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" required>
+          </div>
+
+          <div>
+            <label for="taskTitle" class="block text-xs font-bold text-slate-700 mb-1.5">상세 내용 <span class="text-slate-400 font-normal">(선택)</span></label>
+            <input type="text" id="taskTitle" placeholder="예: 3주차 실습 보고서 제출" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="taskDueDate" class="block text-xs font-bold text-slate-700 mb-1.5">마감일 <span class="text-rose-500">*</span></label>
+              <input type="date" id="taskDueDate" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" required>
+            </div>
+            <div>
+              <label for="taskDueTime" class="block text-xs font-bold text-slate-700 mb-1.5">마감 시간</label>
+              <input type="time" id="taskDueTime" value="23:59" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">중요도</label>
+            <div class="flex gap-2">
+              <label class="flex-1 cursor-pointer">
+                <input type="radio" name="priority" value="normal" checked class="peer sr-only">
+                <div class="text-center py-2 text-xs font-semibold rounded-xl border border-slate-200 peer-checked:bg-indigo-50 peer-checked:border-indigo-500 peer-checked:text-indigo-600 transition">
+                  보통
+                </div>
+              </label>
+              <label class="flex-1 cursor-pointer">
+                <input type="radio" name="priority" value="high" class="peer sr-only">
+                <div class="text-center py-2 text-xs font-semibold rounded-xl border border-slate-200 peer-checked:bg-rose-50 peer-checked:border-rose-500 peer-checked:text-rose-600 transition">
+                  중요 🔥
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition">
+              등록 완료
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- [모달 2] 과목 성적 추가/수정 모달 -->
+    <div id="addGradeModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
+      <div class="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl modal-enter max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+          <h2 class="text-lg font-bold text-slate-800">학과 과목 성적 추가</h2>
+          <button id="closeGradeModalBtn" class="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <form id="gradeForm" class="space-y-4">
+          <div>
+            <label for="gradeSubject" class="block text-xs font-bold text-slate-700 mb-1.5">과목명 <span class="text-rose-500">*</span></label>
+            <input type="text" id="gradeSubject" placeholder="예: 객체지향프로그래밍" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" required>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="gradeType" class="block text-xs font-bold text-slate-700 mb-1.5">이수 구분</label>
+              <select id="gradeType" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                <option value="전공필수">전공필수</option>
+                <option value="전공선택">전공선택</option>
+                <option value="교양필수">교양필수</option>
+                <option value="교양선택">교양선택</option>
+                <option value="일반선택">일반선택</option>
+              </select>
+            </div>
+            <div>
+              <label for="gradeCredits" class="block text-xs font-bold text-slate-700 mb-1.5">학점 수 <span class="text-rose-500">*</span></label>
+              <select id="gradeCredits" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" required>
+                <option value="3">3학점</option>
+                <option value="2">2학점</option>
+                <option value="1">1학점</option>
+                <option value="4">4학점</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="gradeValue" class="block text-xs font-bold text-slate-700 mb-1.5">취득 등급 <span class="text-rose-500">*</span></label>
+              <select id="gradeValue" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-bold text-indigo-700" required>
+                <option value="A+">A+ (4.5 / 4.3)</option>
+                <option value="A0">A0 (4.0)</option>
+                <option value="B+">B+ (3.5 / 3.3)</option>
+                <option value="B0">B0 (3.0)</option>
+                <option value="C+">C+ (2.5 / 2.3)</option>
+                <option value="C0">C0 (2.0)</option>
+                <option value="D+">D+ (1.5 / 1.3)</option>
+                <option value="D0">D0 (1.0)</option>
+                <option value="F">F (0.0)</option>
+                <option value="P">P (Pass/학점인정)</option>
+                <option value="NP">NP (Non-Pass)</option>
+              </select>
+            </div>
+            <div>
+              <label for="gradeScore" class="block text-xs font-bold text-slate-700 mb-1.5">원점수 <span class="text-slate-400 font-normal">(선택)</span></label>
+              <input type="number" id="gradeScore" min="0" max="100" placeholder="예: 95" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition">
+              성적 등록 완료
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- [모달 3] 마일리지 추가 모달 -->
+    <div id="addMileageModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
+      <div class="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl modal-enter max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+          <h2 class="text-lg font-bold text-slate-800">마일리지 획득 등록</h2>
+          <button id="closeMileageModalBtn" class="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <form id="mileageForm" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">마일리지 영역 선택 <span class="text-rose-500">*</span></label>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="cursor-pointer">
+                <input type="radio" name="mileageCategory" value="academic" checked class="peer sr-only">
+                <div class="py-2.5 px-3 rounded-xl border border-slate-200 peer-checked:bg-indigo-50 peer-checked:border-indigo-500 peer-checked:text-indigo-700 text-xs font-bold flex items-center gap-2 transition">
+                  <span>📚</span> 학업/성적 우수
+                </div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="mileageCategory" value="extracurricular" class="peer sr-only">
+                <div class="py-2.5 px-3 rounded-xl border border-slate-200 peer-checked:bg-emerald-50 peer-checked:border-emerald-500 peer-checked:text-emerald-700 text-xs font-bold flex items-center gap-2 transition">
+                  <span>🎪</span> 비교과/특강 참여
+                </div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="mileageCategory" value="volunteer" class="peer sr-only">
+                <div class="py-2.5 px-3 rounded-xl border border-slate-200 peer-checked:bg-amber-50 peer-checked:border-amber-500 peer-checked:text-amber-800 text-xs font-bold flex items-center gap-2 transition">
+                  <span>🤝</span> 봉사/인성/멘토
+                </div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="mileageCategory" value="contest" class="peer sr-only">
+                <div class="py-2.5 px-3 rounded-xl border border-slate-200 peer-checked:bg-rose-50 peer-checked:border-rose-500 peer-checked:text-rose-700 text-xs font-bold flex items-center gap-2 transition">
+                  <span>🏆</span> 대회/자격증/수상
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label for="mileageTitle" class="block text-xs font-bold text-slate-700 mb-1.5">활동명 및 내용 <span class="text-rose-500">*</span></label>
+            <input type="text" id="mileageTitle" placeholder="예: 취업역량강화 캠프 수료, 토익 850점 취득" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" required>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="mileagePoints" class="block text-xs font-bold text-slate-700 mb-1.5">획득 점수 (점) <span class="text-rose-500">*</span></label>
+              <input type="number" id="mileagePoints" min="1" max="100" placeholder="예: 10" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-bold" required>
+            </div>
+            <div>
+              <label for="mileageDate" class="block text-xs font-bold text-slate-700 mb-1.5">취득일</label>
+              <input type="date" id="mileageDate" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition">
+              마일리지 등록 완료
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 안내 메시지 토스트 -->
+    <div id="toastBox" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 opacity-0 transform -translate-y-4">
+      <div id="toastContent" class="bg-slate-900/95 backdrop-blur text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2">
+        <span id="toastMessage">알림</span>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // 로컬 스토리지 키
+    const STORAGE_KEY_SCHEDULE = 'school_life_schedule_v1';
+    const STORAGE_KEY_TASKS = 'school_life_tasks_v1';
+    const STORAGE_KEY_GRADES = 'school_life_grades_v1';
+    const STORAGE_KEY_SCALE = 'school_life_grade_scale_v1';
+    const STORAGE_KEY_MILEAGE = 'school_life_mileage_v1';
+
+    // 요일 한글 배열 (0: 일, 1: 월, ..., 6: 토)
+    const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
+
+    // 초기 샘플 수업 데이터 (교과 및 학과외 신청 과목 포함)
+    const getInitialSchedule = () => [
+      {
+        id: 'sched-1',
+        category: 'regular',
+        subject: '자료구조 및 실습',
+        day: '월',
+        startTime: '09:30',
+        endTime: '11:20',
+        room: '공학1관 405호',
+        instructor: '이교수님'
+      },
+      {
+        id: 'sched-2',
+        category: 'regular',
+        subject: '소프트웨어 공학',
+        day: '화',
+        startTime: '13:00',
+        endTime: '14:50',
+        room: 'IT융합관 203호',
+        instructor: '박교수님'
+      },
+      {
+        id: 'sched-3',
+        category: 'extracurricular',
+        subject: '취업연계 빅데이터 분석 특강',
+        day: '화',
+        startTime: '17:00',
+        endTime: '19:00',
+        room: '미래인재관 세미나실B',
+        instructor: '외부 전문강사'
+      },
+      {
+        id: 'sched-4',
+        category: 'regular',
+        subject: '컴퓨터 알고리즘',
+        day: '목',
+        startTime: '10:00',
+        endTime: '11:50',
+        room: '공학1관 301호',
+        instructor: '최교수님'
+      },
+      {
+        id: 'sched-5',
+        category: 'extracurricular',
+        subject: '학과외 AI 멘토링 프로그램',
+        day: '금',
+        startTime: '15:00',
+        endTime: '17:00',
+        room: '비교과 학습지원실',
+        instructor: '선배 멘토단'
+      }
+    ];
+
+    // 일정 타입 설정
+    const TYPE_CONFIG = {
+      assignment: { label: '과제', icon: '📝', bg: 'bg-indigo-50', text: 'text-indigo-600', ring: 'ring-indigo-200' },
+      exam: { label: '시험', icon: '🎯', bg: 'bg-rose-50', text: 'text-rose-600', ring: 'ring-rose-200' },
+      quiz: { label: '퀴즈', icon: '💡', bg: 'bg-amber-50', text: 'text-amber-600', ring: 'ring-amber-200' },
+      project: { label: '프로젝트', icon: '🚀', bg: 'bg-emerald-50', text: 'text-emerald-600', ring: 'ring-emerald-200' }
+    };
+
+    // 마일리지 카테고리 정의 (100점 = 4개 영역 각 25점 가이드라인)
+    const MILEAGE_CATEGORIES = {
+      academic: { name: '학업/성적 우수', icon: '📚', target: 25, color: 'indigo', barColor: 'bg-indigo-600', bgLight: 'bg-indigo-50', textCol: 'text-indigo-600' },
+      extracurricular: { name: '비교과/특강', icon: '🎪', target: 25, color: 'emerald', barColor: 'bg-emerald-600', bgLight: 'bg-emerald-50', textCol: 'text-emerald-600' },
+      volunteer: { name: '봉사/인성/멘토', icon: '🤝', target: 25, color: 'amber', barColor: 'bg-amber-500', bgLight: 'bg-amber-50', textCol: 'text-amber-700' },
+      contest: { name: '대회/자격증/수상', icon: '🏆', target: 25, color: 'rose', barColor: 'bg-rose-500', bgLight: 'bg-rose-50', textCol: 'text-rose-600' }
+    };
+
+    // 평점 산출 테이블 (4.5 기준 & 4.3 기준)
+    const GRADE_POINTS = {
+      '4.5': {
+        'A+': 4.5, 'A0': 4.0, 'B+': 3.5, 'B0': 3.0,
+        'C+': 2.5, 'C0': 2.0, 'D+': 1.5, 'D0': 1.0,
+        'F': 0.0, 'P': null, 'NP': null
+      },
+      '4.3': {
+        'A+': 4.3, 'A0': 4.0, 'B+': 3.3, 'B0': 3.0,
+        'C+': 2.3, 'C0': 2.0, 'D+': 1.3, 'D0': 1.0,
+        'F': 0.0, 'P': null, 'NP': null
+      }
+    };
+
+    // 초기 샘플 데이터
+    const getInitialTasks = () => {
+      const today = new Date();
+      const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+      const after3Days = new Date(today); after3Days.setDate(today.getDate() + 3);
+      const formatDate = (d) => d.toISOString().split('T')[0];
+
+      return [
+        {
+          id: 'task-1',
+          type: 'assignment',
+          subject: '소프트웨어 공학',
+          title: '3주차 요구사항 분석서 제출',
+          dueDate: formatDate(tomorrow),
+          dueTime: '23:50',
+          priority: 'high',
+          completed: false,
+          createdAt: Date.now() - 3600000
+        },
+        {
+          id: 'task-2',
+          type: 'exam',
+          subject: '컴퓨터 알고리즘',
+          title: '중간고사 필기 시험 대비',
+          dueDate: formatDate(after3Days),
+          dueTime: '14:00',
+          priority: 'high',
+          completed: false,
+          createdAt: Date.now() - 7200000
+        }
+      ];
+    };
+
+    const getInitialGrades = () => [
+      { id: 'grade-1', subject: '자료구조', credits: 3, type: '전공필수', grade: 'A+', rawScore: 98 },
+      { id: 'grade-2', subject: '컴퓨터네트워크', credits: 3, type: '전공선택', grade: 'A0', rawScore: 92 },
+      { id: 'grade-3', subject: '대학영어회화', credits: 2, type: '교양필수', grade: 'B+', rawScore: 88 },
+      { id: 'grade-4', subject: '진로설계와 코칭', credits: 1, type: '일반선택', grade: 'P', rawScore: 100 }
+    ];
+
+    const getInitialMileage = () => {
+      const today = new Date().toISOString().split('T')[0];
+      return [
+        { id: 'mile-1', category: 'academic', title: '직전 학기 학업성적 우수 장학 대상', points: 20, date: today },
+        { id: 'mile-2', category: 'extracurricular', title: '취업역량강화 명사 특강 이수', points: 10, date: today },
+        { id: 'mile-3', category: 'volunteer', title: '교내 멘토링 멘토 활동 (15시간)', points: 15, date: today }
+      ];
+    };
+
+    // 앱 상태
+    let activeTab = 'schedule'; // 'schedule' | 'tasks' | 'grades' | 'mileage'
+    let schedules = [];
+    let assignments = [];
+    let grades = [];
+    let mileages = [];
+    let gradeScale = '4.5';
+    let currentFilter = 'all';
+    let currentSort = 'deadline';
+    let currentSchedView = 'today'; // 'today' | 'week' | 'all'
+    let selectedWeekDay = '';
+
+    // DOM 캐싱 - 탭
+    const tabScheduleBtn = document.getElementById('tabScheduleBtn');
+    const tabTasksBtn = document.getElementById('tabTasksBtn');
+    const tabGradesBtn = document.getElementById('tabGradesBtn');
+    const tabMileageBtn = document.getElementById('tabMileageBtn');
+
+    // DOM 캐싱 - 섹션
+    const scheduleSection = document.getElementById('scheduleSection');
+    const tasksSection = document.getElementById('tasksSection');
+    const gradesSection = document.getElementById('gradesSection');
+    const mileageSection = document.getElementById('mileageSection');
+
+    // DOM 캐싱 - 상단 바
+    const scheduleSummaryBar = document.getElementById('scheduleSummaryBar');
+    const tasksSummaryBar = document.getElementById('tasksSummaryBar');
+    const gradesSummaryBar = document.getElementById('gradesSummaryBar');
+    const mileageSummaryBar = document.getElementById('mileageSummaryBar');
+    const assignmentHeaderControls = document.getElementById('assignmentHeaderControls');
+    const mainActionBtn = document.getElementById('mainActionBtn');
+    const mainActionText = document.getElementById('mainActionText');
+    const todayTextEl = document.getElementById('todayText');
+
+    // DOM 캐싱 - 수업 스케줄
+    const todayClassCountEl = document.getElementById('todayClassCount');
+    const regularCourseCountEl = document.getElementById('regularCourseCount');
+    const extraCourseCountEl = document.getElementById('extraCourseCount');
+    const scheduleTodayDayBadge = document.getElementById('scheduleTodayDayBadge');
+    const scheduleCurrentTime = document.getElementById('scheduleCurrentTime');
+    const scheduleHighlightTitle = document.getElementById('scheduleHighlightTitle');
+    const scheduleHighlightDesc = document.getElementById('scheduleHighlightDesc');
+    const schedFilterButtons = document.querySelectorAll('.sched-filter-btn');
+    const daySelectorContainer = document.getElementById('daySelectorContainer');
+    const dayTabs = document.querySelectorAll('.day-tab');
+    const scheduleListEl = document.getElementById('scheduleList');
+    const scheduleEmptyState = document.getElementById('scheduleEmptyState');
+    const scheduleEmptyTitle = document.getElementById('scheduleEmptyTitle');
+    const scheduleEmptySub = document.getElementById('scheduleEmptySub');
+
+    // 모달 DOM (스케줄)
+    const addScheduleModal = document.getElementById('addScheduleModal');
+    const closeScheduleModalBtn = document.getElementById('closeScheduleModalBtn');
+    const scheduleForm = document.getElementById('scheduleForm');
+
+    // 과제 DOM
+    const assignmentListEl = document.getElementById('assignmentList');
+    const tasksEmptyState = document.getElementById('tasksEmptyState');
+    const countTotalEl = document.getElementById('countTotal');
+    const countUrgentEl = document.getElementById('countUrgent');
+    const countDoneEl = document.getElementById('countDone');
+    const sortToggleBtn = document.getElementById('sortToggleBtn');
+    const sortLabel = document.getElementById('sortLabel');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+
+    // 성적 DOM
+    const gradesListEl = document.getElementById('gradesList');
+    const gradesEmptyState = document.getElementById('gradesEmptyState');
+    const totalCreditsText = document.getElementById('totalCreditsText');
+    const gpaText = document.getElementById('gpaText');
+    const courseCountText = document.getElementById('courseCountText');
+    const gpaProgressText = document.getElementById('gpaProgressText');
+    const gpaProgressBar = document.getElementById('gpaProgressBar');
+    const gradeScaleSelect = document.getElementById('gradeScaleSelect');
+
+    // 마일리지 DOM
+    const mileageTotalScore = document.getElementById('mileageTotalScore');
+    const mileageNeedScore = document.getElementById('mileageNeedScore');
+    const mileageRateText = document.getElementById('mileageRateText');
+    const mileageScoreDisplay = document.getElementById('mileageScoreDisplay');
+    const mileageMainProgressBar = document.getElementById('mileageMainProgressBar');
+    const mileageRemainPoints = document.getElementById('mileageRemainPoints');
+    const mileageStatusTitle = document.getElementById('mileageStatusTitle');
+    const mileageStatusDesc = document.getElementById('mileageStatusDesc');
+    const mileageStatusIcon = document.getElementById('mileageStatusIcon');
+    const mileageLevelBadge = document.getElementById('mileageLevelBadge');
+    const categoryProgressContainer = document.getElementById('categoryProgressContainer');
+    const mileageListEl = document.getElementById('mileageList');
+    const mileageEmptyState = document.getElementById('mileageEmptyState');
+    const mileageCountText = document.getElementById('mileageCountText');
+
+    // 모달 DOM
+    const addTaskModal = document.getElementById('addTaskModal');
+    const closeTaskModalBtn = document.getElementById('closeTaskModalBtn');
+    const taskForm = document.getElementById('taskForm');
+    const taskDueDate = document.getElementById('taskDueDate');
+
+    const addGradeModal = document.getElementById('addGradeModal');
+    const closeGradeModalBtn = document.getElementById('closeGradeModalBtn');
+    const gradeForm = document.getElementById('gradeForm');
+
+    const addMileageModal = document.getElementById('addMileageModal');
+    const closeMileageModalBtn = document.getElementById('closeMileageModalBtn');
+    const mileageForm = document.getElementById('mileageForm');
+    const mileageDateInput = document.getElementById('mileageDate');
+
+    const toastBox = document.getElementById('toastBox');
+    const toastMessage = document.getElementById('toastMessage');
+
+    // 토스트 안내창
+    function showToast(msg) {
+      toastMessage.textContent = msg;
+      toastBox.classList.remove('opacity-0', '-translate-y-4');
+      toastBox.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        toastBox.classList.remove('opacity-100', 'translate-y-0');
+        toastBox.classList.add('opacity-0', '-translate-y-4');
+      }, 2400);
+    }
+
+    // 날짜 포맷
+    function updateDateHeader() {
+      const now = new Date();
+      const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' };
+      todayTextEl.textContent = now.toLocaleDateString('ko-KR', options);
+
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      if (scheduleCurrentTime) scheduleCurrentTime.textContent = `${hours}:${minutes}`;
+
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      taskDueDate.min = `${year}-${month}-${day}`;
+      taskDueDate.value = `${year}-${month}-${day}`;
+      if (mileageDateInput) mileageDateInput.value = `${year}-${month}-${day}`;
+    }
+
+    // ================= [수업·시간표 렌더링 로직] =================
+    function getTodayDayName() {
+      return DAY_NAMES[new Date().getDay()];
+    }
+
+    function timeToMinutes(timeStr) {
+      if (!timeStr) return 0;
+      const [h, m] = timeStr.split(':').map(Number);
+      return (h * 60) + m;
+    }
+
+    function renderSchedule() {
+      const todayDay = getTodayDayName();
+      const now = new Date();
+      const currentMinutes = (now.getHours() * 60) + now.getMinutes();
+
+      // 통계 갱신
+      const todayClasses = schedules.filter(s => s.day === todayDay);
+      todayClasses.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+
+      const regularCount = schedules.filter(s => s.category === 'regular').length;
+      const extraCount = schedules.filter(s => s.category === 'extracurricular').length;
+
+      todayClassCountEl.textContent = `${todayClasses.length}건`;
+      regularCourseCountEl.textContent = `${regularCount}개`;
+      extraCourseCountEl.textContent = `${extraCount}개`;
+
+      // 오늘의 브리핑 헤더 설정
+      scheduleTodayDayBadge.textContent = `오늘(${todayDay}요일) 수업 브리핑`;
+      
+      const upcomingToday = todayClasses.filter(s => timeToMinutes(s.endTime) > currentMinutes);
+      if (todayClasses.length === 0) {
+        scheduleHighlightTitle.textContent = `오늘(${todayDay})은 예정된 수업이 없습니다!`;
+        scheduleHighlightDesc.textContent = '과제 준비나 휴식 시간을 가져보세요 ☕';
+      } else if (upcomingToday.length === 0) {
+        scheduleHighlightTitle.textContent = '오늘의 모든 수업이 종료되었습니다 👏';
+        scheduleHighlightDesc.textContent = `총 ${todayClasses.length}개의 강의를 모두 마쳤습니다. 수고하셨습니다!`;
+      } else {
+        const nextClass = upcomingToday[0];
+        const nextStartMin = timeToMinutes(nextClass.startTime);
+        if (currentMinutes < nextStartMin) {
+          const diff = nextStartMin - currentMinutes;
+          scheduleHighlightTitle.textContent = `${nextClass.subject} (${nextClass.startTime})`;
+          scheduleHighlightDesc.textContent = `📍 ${nextClass.room} · ${diff}분 뒤 수업이 시작됩니다!`;
+        } else {
+          scheduleHighlightTitle.textContent = `[진행 중] ${nextClass.subject}`;
+          scheduleHighlightDesc.textContent = `📍 ${nextClass.room} (${nextClass.startTime} ~ ${nextClass.endTime})`;
+        }
+      }
+
+      // 주간 탭 초기화 (기본값: 오늘 요일)
+      if (!selectedWeekDay) selectedWeekDay = todayDay === '일' ? '월' : todayDay;
+
+      // 필터링 적용
+      let displayItems = [];
+      if (currentSchedView === 'today') {
+        displayItems = [...todayClasses];
+        daySelectorContainer.classList.add('hidden');
+      } else if (currentSchedView === 'week') {
+        daySelectorContainer.classList.remove('hidden');
+        dayTabs.forEach(btn => {
+          if (btn.dataset.day === selectedWeekDay) {
+            btn.className = 'day-tab py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white shadow-sm transition';
+          } else {
+            btn.className = 'day-tab py-1.5 text-xs font-bold rounded-lg text-slate-600 hover:bg-slate-100 transition';
+          }
+        });
+        displayItems = schedules.filter(s => s.day === selectedWeekDay);
+        displayItems.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+      } else {
+        // all (전체 과목 보기)
+        daySelectorContainer.classList.add('hidden');
+        displayItems = [...schedules];
+        const dayOrder = { '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6, '일': 7 };
+        displayItems.sort((a, b) => {
+          if (dayOrder[a.day] !== dayOrder[b.day]) return dayOrder[a.day] - dayOrder[b.day];
+          return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+        });
+      }
+
+      // 렌더링
+      scheduleListEl.innerHTML = '';
+      if (displayItems.length === 0) {
+        scheduleEmptyState.classList.remove('hidden');
+        scheduleEmptyState.classList.add('flex');
+        if (currentSchedView === 'today') {
+          scheduleEmptyTitle.textContent = `오늘(${todayDay}요일)은 수업이 없습니다.`;
+          scheduleEmptySub.textContent = '이번 주 시간표나 다른 요일 일정을 확인해보세요.';
+        } else if (currentSchedView === 'week') {
+          scheduleEmptyTitle.textContent = `${selectedWeekDay}요일에 등록된 수업이 없습니다.`;
+          scheduleEmptySub.textContent = '하단 버튼을 눌러 새 수업을 추가해보세요.';
+        } else {
+          scheduleEmptyTitle.textContent = '등록된 교과/학과외 과목이 없습니다.';
+          scheduleEmptySub.textContent = '하단 버튼을 눌러 수업 일정을 추가해보세요.';
+        }
+        return;
+      }
+
+      scheduleEmptyState.classList.add('hidden');
+      scheduleEmptyState.classList.remove('flex');
+
+      displayItems.forEach(item => {
+        const isToday = item.day === todayDay;
+        const startMin = timeToMinutes(item.startTime);
+        const endMin = timeToMinutes(item.endTime);
+        const isOngoing = isToday && (currentMinutes >= startMin && currentMinutes <= endMin);
+        const isFinished = isToday && (currentMinutes > endMin);
+        const isUpcomingSoon = isToday && (startMin - currentMinutes <= 30 && startMin - currentMinutes > 0);
+
+        const isRegular = item.category === 'regular';
+        const catBadge = isRegular 
+          ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">🏫 정규교과</span>'
+          : '<span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200">🌐 학과외/비교과</span>';
+
+        let statusBadge = '';
+        let cardBorder = 'border-slate-200 hover:border-slate-300';
+
+        if (isOngoing) {
+          statusBadge = '<span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-500 text-white animate-pulse">● 실시간 진행 중</span>';
+          cardBorder = 'border-rose-400 bg-rose-50/20 ring-1 ring-rose-300';
+        } else if (isUpcomingSoon) {
+          statusBadge = `<span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-orange-500 text-white">${startMin - currentMinutes}분 후 시작</span>`;
+          cardBorder = 'border-orange-300 bg-orange-50/20';
+        } else if (isFinished) {
+          statusBadge = '<span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-400">수업 종료</span>';
+          cardBorder = 'border-slate-200 bg-slate-50/60 opacity-60';
+        }
+
+        const card = document.createElement('div');
+        card.className = `bg-white rounded-2xl p-4 border transition-all duration-200 shadow-sm flex items-start justify-between gap-3 ${cardBorder}`;
+        card.innerHTML = `
+          <div class="flex items-start gap-3 flex-1 min-w-0">
+            <div class="w-12 h-12 rounded-2xl flex flex-col items-center justify-center font-black flex-shrink-0 ${isRegular ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-amber-50 text-amber-800 border border-amber-100'}">
+              <span class="text-xs font-bold leading-tight">${item.day}</span>
+              <span class="text-[11px] font-extrabold">${item.startTime}</span>
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                ${catBadge}
+                ${statusBadge}
+              </div>
+              <h3 class="text-sm font-bold text-slate-900 mt-1 break-words">${escapeHtml(item.subject)}</h3>
+              
+              <div class="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1.5 text-xs text-slate-500">
+                <span class="flex items-center gap-1 font-semibold text-slate-700">
+                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  ${escapeHtml(item.room)}
+                </span>
+                <span class="flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  ${item.startTime} ~ ${item.endTime}
+                </span>
+                ${item.instructor ? `<span class="text-slate-400">담당: ${escapeHtml(item.instructor)}</span>` : ''}
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center">
+            <button onclick="deleteSchedule('${item.id}')" title="수업 일정 삭제" class="p-1.5 text-slate-300 hover:text-rose-500 rounded-lg hover:bg-rose-50 transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </button>
+          </div>
+        `;
+        scheduleListEl.appendChild(card);
+      });
+    }
+
+    // 주간 요일 탭 클릭 이벤트 바인딩
+    dayTabs.forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedWeekDay = btn.dataset.day;
+        renderSchedule();
+      });
+    });
+
+    // 수업 필터 버튼 이벤트 바인딩
+    schedFilterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        schedFilterButtons.forEach(b => {
+          b.classList.remove('bg-white', 'text-indigo-700', 'shadow-sm', 'font-semibold');
+          b.classList.add('text-slate-500', 'font-medium');
+        });
+        btn.classList.add('bg-white', 'text-indigo-700', 'shadow-sm', 'font-semibold');
+        btn.classList.remove('text-slate-500', 'font-medium');
+        currentSchedView = btn.dataset.view;
+        renderSchedule();
+      });
+    });
+
+    function formatFriendlyDate(dueDateStr, dueTimeStr) {
+      if (!dueDateStr) return '';
+      const parts = dueDateStr.split('-').map(Number);
+      const month = parts[1];
+      const day = parts[2];
+      let timeText = '';
+      if (dueTimeStr) {
+        const [hours, minutes] = dueTimeStr.split(':').map(Number);
+        const ampm = hours < 12 ? '오전' : '오후';
+        const formattedHour = hours % 12 === 0 ? 12 : hours % 12;
+        const formattedMin = String(minutes).padStart(2, '0');
+        timeText = ` ${ampm} ${formattedHour}:${formattedMin}`;
+      }
+      return `${month}월 ${day}일${timeText}`;
+    }
+
+    // D-Day 계산
+    function calculateDDay(dueDateStr, dueTimeStr) {
+      const now = new Date();
+      const time = dueTimeStr || '23:59';
+      const [hours, minutes] = time.split(':').map(Number);
+      const targetDate = new Date(`${dueDateStr}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`);
+      
+      const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const targetDateOnly = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+      
+      const oneDayMs = 24 * 60 * 60 * 1000;
+      const dayDiff = Math.round((targetDateOnly - nowDateOnly) / oneDayMs);
+      const diffMs = targetDate - now;
+
+      if (diffMs < 0) {
+        return { text: dayDiff === 0 ? '마감 지남' : `D+${Math.abs(dayDiff)} 지남`, status: 'overdue', badgeBg: 'bg-rose-100 text-rose-700 border-rose-300' };
+      }
+
+      if (dayDiff === 0) {
+        const hoursLeft = Math.max(1, Math.floor(diffMs / (1000 * 60 * 60)));
+        return { 
+          text: '🚨 오늘 마감', 
+          status: 'today', 
+          badgeBg: 'bg-rose-500 text-white shadow-md shadow-rose-200 border-rose-600 animate-pulse font-extrabold', 
+          subText: `${hoursLeft}시간 남음`,
+          isUrgent: true
+        };
+      } else if (dayDiff === 1) {
+        return { 
+          text: '⚡ D-1 (내일)', 
+          status: 'urgent', 
+          badgeBg: 'bg-orange-500 text-white shadow-md shadow-orange-200 border-orange-600 font-bold', 
+          isUrgent: true 
+        };
+      } else if (dayDiff <= 3) {
+        return { 
+          text: `⏳ D-${dayDiff}`, 
+          status: 'urgent', 
+          badgeBg: 'bg-amber-100 text-amber-900 border-amber-300 font-bold', 
+          isUrgent: true 
+        };
+      } else if (dayDiff <= 7) {
+        return { 
+          text: `D-${dayDiff}`, 
+          status: 'approaching', 
+          badgeBg: 'bg-indigo-50 text-indigo-700 border-indigo-200 font-semibold' 
+        };
+      } else {
+        return { 
+          text: `D-${dayDiff}`, 
+          status: 'normal', 
+          badgeBg: 'bg-slate-100 text-slate-600 border-slate-200 font-medium' 
+        };
+      }
+    }
+
+    // 과제 렌더링
+    function renderTasks() {
+      let filtered = assignments.filter(item => {
+        if (currentFilter === 'active') return !item.completed;
+        if (currentFilter === 'completed') return item.completed;
+        return true;
+      });
+
+      filtered.sort((a, b) => {
+        if (currentSort === 'deadline') {
+          if (a.completed !== b.completed) return a.completed ? 1 : -1;
+          return new Date(`${a.dueDate}T${a.dueTime || '23:59'}`) - new Date(`${b.dueDate}T${b.dueTime || '23:59'}`);
+        } else {
+          return b.createdAt - a.createdAt;
+        }
+      });
+
+      // 통계 갱신
+      countTotalEl.textContent = assignments.length;
+      countDoneEl.textContent = assignments.filter(i => i.completed).length;
+      countUrgentEl.textContent = assignments.filter(i => {
+        if (i.completed) return false;
+        const dDayInfo = calculateDDay(i.dueDate, i.dueTime);
+        return dDayInfo.status === 'today' || dDayInfo.status === 'urgent' || dDayInfo.status === 'overdue';
+      }).length;
+
+      assignmentListEl.innerHTML = '';
+      if (filtered.length === 0) {
+        tasksEmptyState.classList.remove('hidden');
+        tasksEmptyState.classList.add('flex');
+      } else {
+        tasksEmptyState.classList.add('hidden');
+        tasksEmptyState.classList.remove('flex');
+
+        filtered.forEach(item => {
+          const dday = calculateDDay(item.dueDate, item.dueTime);
+          const isDone = item.completed;
+          const typeConf = TYPE_CONFIG[item.type] || TYPE_CONFIG.assignment;
+          const friendlyDateText = formatFriendlyDate(item.dueDate, item.dueTime);
+
+          let cardHighlight = 'border-slate-200 hover:border-slate-300';
+          if (!isDone) {
+            if (dday.status === 'today') cardHighlight = 'border-rose-400 bg-rose-50/25 ring-1 ring-rose-300';
+            else if (dday.status === 'urgent') cardHighlight = 'border-amber-300 bg-amber-50/20';
+            else if (item.priority === 'high') cardHighlight = 'border-rose-200 bg-white';
+          } else {
+            cardHighlight = 'border-slate-200 bg-slate-50/80 opacity-60';
+          }
+
+          const card = document.createElement('div');
+          card.className = `group bg-white rounded-2xl p-4 border transition-all duration-200 shadow-sm hover:shadow flex flex-col justify-between ${cardHighlight}`;
+          card.innerHTML = `
+            <div class="flex items-start justify-between gap-2.5">
+              <div class="flex items-start gap-3 flex-1 min-w-0">
+                <div class="relative flex-shrink-0 mt-0.5">
+                  <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl shadow-sm border ${typeConf.bg} ${typeConf.ring} ${isDone ? 'grayscale opacity-75' : ''}">
+                    ${typeConf.icon}
+                  </div>
+                  ${item.priority === 'high' && !isDone ? `
+                    <span class="absolute -top-1 -right-1 bg-rose-600 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-white shadow">★</span>
+                  ` : ''}
+                </div>
+
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="inline-block text-[11px] font-bold px-2 py-0.5 rounded-md ${typeConf.bg} ${typeConf.text}">
+                      ${typeConf.label}
+                    </span>
+                    <span class="inline-block text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
+                      ${escapeHtml(item.subject)}
+                    </span>
+                    ${item.priority === 'high' ? '<span class="text-[10px] bg-rose-50 text-rose-600 font-bold px-1.5 py-0.5 rounded border border-rose-200">🔥 중요</span>' : ''}
+                  </div>
+                  
+                  <h3 class="text-sm font-bold text-slate-900 mt-1 break-words leading-snug ${isDone ? 'line-through text-slate-400' : ''}">
+                    ${item.title ? escapeHtml(item.title) : `${typeConf.label} 일정`}
+                  </h3>
+
+                  <div class="flex items-center flex-wrap gap-2 mt-2 text-xs">
+                    <span class="font-medium text-slate-600 flex items-center gap-1">
+                      <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <strong class="font-semibold text-slate-700">${friendlyDateText}</strong> 마감
+                    </span>
+                    ${dday.subText && !isDone ? `<span class="text-rose-600 font-bold bg-rose-50 px-1.5 py-0.5 rounded text-[11px]">${dday.subText}</span>` : ''}
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex flex-col items-end gap-2 flex-shrink-0">
+                <span class="px-2.5 py-1 text-xs rounded-xl border tracking-tight ${isDone ? 'bg-slate-200 text-slate-500 border-slate-300 font-medium' : dday.badgeBg}">
+                  ${isDone ? '완료됨' : dday.text}
+                </span>
+
+                <div class="flex items-center gap-1 mt-1">
+                  <button onclick="toggleComplete('${item.id}')" title="${isDone ? '미완료로 변경' : '완료 처리'}" class="p-1.5 rounded-lg border transition-all ${isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-200 hover:border-emerald-500 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'}">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+                  </button>
+                  <button onclick="deleteTask('${item.id}')" title="삭제" class="p-1.5 text-slate-300 hover:text-rose-500 transition-colors rounded-lg hover:bg-rose-50">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+          assignmentListEl.appendChild(card);
+        });
+      }
+    }
+
+    // 성적 렌더링 및 평점 계산
+    function renderGrades() {
+      const scaleMap = GRADE_POINTS[gradeScale];
+      let totalEarnedCredits = 0; // 취득 학점 (F, NP 제외)
+      let gpaTargetCredits = 0;   // 평점 계산 분모 학점 (P/NP 제외)
+      let totalQualityPoints = 0; // 학점 * 평점 합계
+
+      gradesListEl.innerHTML = '';
+
+      if (grades.length === 0) {
+        gradesEmptyState.classList.remove('hidden');
+        gradesEmptyState.classList.add('flex');
+        totalCreditsText.textContent = '0';
+        gpaText.textContent = '0.00';
+        courseCountText.textContent = '0';
+        gpaProgressText.textContent = `0.00 / ${gradeScale}`;
+        gpaProgressBar.style.width = '0%';
+        return;
+      }
+
+      gradesEmptyState.classList.add('hidden');
+      gradesEmptyState.classList.remove('flex');
+
+      grades.forEach(item => {
+        const credit = parseFloat(item.credits) || 0;
+        const pt = scaleMap[item.grade];
+
+        // 취득 학점 카운트 (F, NP 제외)
+        if (item.grade !== 'F' && item.grade !== 'NP') {
+          totalEarnedCredits += credit;
+        }
+
+        // GPA 계산 분모에 포함되는 과목 (P, NP는 평점 산출에서 제외되는 대학 표준 규칙)
+        if (pt !== null && pt !== undefined) {
+          gpaTargetCredits += credit;
+          totalQualityPoints += (credit * pt);
+        }
+
+        // 등급별 컬러 스타일
+        let gradeBadgeClass = 'bg-slate-100 text-slate-700 border-slate-300';
+        if (item.grade.startsWith('A')) gradeBadgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-300 font-extrabold';
+        else if (item.grade.startsWith('B')) gradeBadgeClass = 'bg-indigo-50 text-indigo-700 border-indigo-300 font-bold';
+        else if (item.grade.startsWith('C')) gradeBadgeClass = 'bg-amber-50 text-amber-800 border-amber-300 font-medium';
+        else if (item.grade.startsWith('D')) gradeBadgeClass = 'bg-orange-50 text-orange-700 border-orange-300 font-medium';
+        else if (item.grade === 'F' || item.grade === 'NP') gradeBadgeClass = 'bg-rose-50 text-rose-700 border-rose-300 font-bold';
+        else if (item.grade === 'P') gradeBadgeClass = 'bg-teal-50 text-teal-700 border-teal-300 font-bold';
+
+        const gradeCard = document.createElement('div');
+        gradeCard.className = 'bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between hover:border-slate-300 transition';
+        gradeCard.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl flex flex-col items-center justify-center border ${gradeBadgeClass} shadow-xs">
+              <span class="text-base leading-none">${item.grade}</span>
+              ${pt !== null && pt !== undefined ? `<span class="text-[10px] mt-0.5 opacity-80">${pt.toFixed(1)}</span>` : '<span class="text-[9px] mt-0.5">Pass</span>'}
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">${item.type}</span>
+                <span class="text-[11px] font-bold text-indigo-600">${item.credits}학점</span>
+                ${item.rawScore ? `<span class="text-[10px] font-semibold text-slate-400">(${item.rawScore}점)</span>` : ''}
+              </div>
+              <h3 class="text-sm font-bold text-slate-800 mt-0.5">${escapeHtml(item.subject)}</h3>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1">
+            <button onclick="deleteGrade('${item.id}')" title="성적 삭제" class="p-2 text-slate-300 hover:text-rose-500 rounded-lg hover:bg-rose-50 transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </button>
+          </div>
+        `;
+        gradesListEl.appendChild(gradeCard);
+      });
+
+      // GPA 계산
+      const calculatedGPA = gpaTargetCredits > 0 ? (totalQualityPoints / gpaTargetCredits) : 0;
+      const maxScale = parseFloat(gradeScale);
+      const gpaFormatted = calculatedGPA.toFixed(2);
+
+      totalCreditsText.textContent = totalEarnedCredits;
+      gpaText.textContent = gpaFormatted;
+      courseCountText.textContent = grades.length;
+      gpaProgressText.textContent = `${gpaFormatted} / ${maxScale.toFixed(2)}`;
+      
+      const percent = Math.min(100, Math.max(0, (calculatedGPA / maxScale) * 100));
+      gpaProgressBar.style.width = `${percent}%`;
+    }
+
+    // 마일리지 렌더링 및 100점 게이지 & 부족 점수 분석
+    function renderMileage() {
+      const totalScore = mileages.reduce((sum, item) => sum + (Number(item.points) || 0), 0);
+      const targetScore = 100;
+      const needScore = Math.max(0, targetScore - totalScore);
+      const achieveRate = Math.min(100, Math.round((totalScore / targetScore) * 100));
+
+      // 상단 요약 바 갱신
+      mileageTotalScore.textContent = totalScore;
+      mileageNeedScore.textContent = needScore;
+      mileageRateText.textContent = achieveRate;
+
+      // 대형 메인 게이지 바
+      mileageScoreDisplay.textContent = totalScore;
+      mileageMainProgressBar.style.width = `${Math.min(100, (totalScore / targetScore) * 100)}%`;
+
+      // 달성도 상태 진단
+      if (totalScore >= 100) {
+        mileageLevelBadge.textContent = '목표 100% 달성 🎉';
+        mileageLevelBadge.className = 'px-2.5 py-1 rounded-full text-xs font-black bg-emerald-500 text-white shadow-xs';
+        mileageStatusIcon.textContent = '🌟';
+        mileageStatusTitle.textContent = '마일리지 100점 목표를 달성했습니다!';
+        mileageStatusDesc.textContent = `축하합니다! 추가 획득 점수: +${totalScore - 100}점`;
+        mileageRemainPoints.textContent = '달성완료';
+        mileageRemainPoints.className = 'text-base font-black text-emerald-600';
+      } else {
+        if (totalScore >= 70) {
+          mileageLevelBadge.textContent = '우수 단계';
+          mileageLevelBadge.className = 'px-2.5 py-1 rounded-full text-xs font-black bg-indigo-600 text-white shadow-xs';
+        } else if (totalScore >= 40) {
+          mileageLevelBadge.textContent = '성장 단계';
+          mileageLevelBadge.className = 'px-2.5 py-1 rounded-full text-xs font-black bg-amber-500 text-white shadow-xs';
+        } else {
+          mileageLevelBadge.textContent = '시작 단계';
+          mileageLevelBadge.className = 'px-2.5 py-1 rounded-full text-xs font-black bg-slate-600 text-white shadow-xs';
+        }
+        mileageStatusIcon.textContent = '💡';
+        mileageStatusTitle.textContent = `앞으로 ${needScore}점 더 채워야 합니다`;
+        mileageStatusDesc.textContent = '부족한 영역의 교내 프로그램이나 자격증 취득에 참여하세요.';
+        mileageRemainPoints.textContent = `-${needScore}점`;
+        mileageRemainPoints.className = 'text-base font-black text-rose-500';
+      }
+
+      // 4개 영역별 점수 집계 및 부족한 부분 분석
+      const categoryScores = { academic: 0, extracurricular: 0, volunteer: 0, contest: 0 };
+      mileages.forEach(item => {
+        if (categoryScores[item.category] !== undefined) {
+          categoryScores[item.category] += (Number(item.points) || 0);
+        }
+      });
+
+      categoryProgressContainer.innerHTML = '';
+      Object.keys(MILEAGE_CATEGORIES).forEach(catKey => {
+        const cat = MILEAGE_CATEGORIES[catKey];
+        const currentCatScore = categoryScores[catKey] || 0;
+        const catNeed = Math.max(0, cat.target - currentCatScore);
+        const catPercent = Math.min(100, Math.round((currentCatScore / cat.target) * 100));
+
+        const catRow = document.createElement('div');
+        catRow.className = 'space-y-1';
+        catRow.innerHTML = `
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-slate-700 flex items-center gap-1.5">
+              <span>${cat.icon}</span> ${cat.name}
+            </span>
+            <div class="flex items-center gap-1.5">
+              <span class="font-extrabold text-slate-800">${currentCatScore} / ${cat.target}점</span>
+              ${catNeed > 0 ? `
+                <span class="text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">
+                  부족 ${catNeed}점
+                </span>
+              ` : `
+                <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+                  달성
+                </span>
+              `}
+            </div>
+          </div>
+          <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+            <div class="${cat.barColor} h-full rounded-full transition-all duration-300" style="width: ${catPercent}%"></div>
+          </div>
+        `;
+        categoryProgressContainer.appendChild(catRow);
+      });
+
+      // 마일리지 내역 리스트 렌더링
+      mileageListEl.innerHTML = '';
+      mileageCountText.textContent = mileages.length;
+
+      if (mileages.length === 0) {
+        mileageEmptyState.classList.remove('hidden');
+        mileageEmptyState.classList.add('flex');
+        return;
+      }
+
+      mileageEmptyState.classList.add('hidden');
+      mileageEmptyState.classList.remove('flex');
+
+      mileages.forEach(item => {
+        const cat = MILEAGE_CATEGORIES[item.category] || MILEAGE_CATEGORIES.academic;
+        const itemEl = document.createElement('div');
+        itemEl.className = 'bg-white rounded-2xl p-3.5 border border-slate-200 shadow-sm flex items-center justify-between hover:border-slate-300 transition';
+        itemEl.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg ${cat.bgLight} border border-slate-100">
+              ${cat.icon}
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${cat.bgLight} ${cat.textCol}">${cat.name}</span>
+                <span class="text-[11px] text-slate-400 font-medium">${item.date || ''}</span>
+              </div>
+              <h4 class="text-xs font-bold text-slate-800 mt-0.5">${escapeHtml(item.title)}</h4>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-black px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100">
+              +${item.points}점
+            </span>
+            <button onclick="deleteMileage('${item.id}')" title="마일리지 삭제" class="p-1.5 text-slate-300 hover:text-rose-500 rounded-lg hover:bg-rose-50 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </button>
+          </div>
+        `;
+        mileageListEl.appendChild(itemEl);
+      });
+    }
+
+    // XSS 방지
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // 로컬 스토리지 동기화
+    function saveAll() {
+      try {
+        localStorage.setItem(STORAGE_KEY_SCHEDULE, JSON.stringify(schedules));
+        localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(assignments));
+        localStorage.setItem(STORAGE_KEY_GRADES, JSON.stringify(grades));
+        localStorage.setItem(STORAGE_KEY_MILEAGE, JSON.stringify(mileages));
+        localStorage.setItem(STORAGE_KEY_SCALE, gradeScale);
+      } catch (e) {
+        console.error('스토리지 저장 실패', e);
+      }
+    }
+
+    // 탭 전환 핸들러
+    function switchTab(tab) {
+      activeTab = tab;
+
+      // 탭 버튼 스타일 초기화
+      const tabInactiveClass = 'py-2 text-[10px] sm:text-xs font-bold rounded-xl transition flex items-center justify-center gap-0.5 sm:gap-1 text-indigo-100 hover:text-white';
+      const tabActiveClass = 'py-2 text-[10px] sm:text-xs font-bold rounded-xl transition flex items-center justify-center gap-0.5 sm:gap-1 bg-white text-indigo-700 shadow-sm';
+
+      tabScheduleBtn.className = tab === 'schedule' ? tabActiveClass : tabInactiveClass;
+      tabTasksBtn.className = tab === 'tasks' ? tabActiveClass : tabInactiveClass;
+      tabGradesBtn.className = tab === 'grades' ? tabActiveClass : tabInactiveClass;
+      tabMileageBtn.className = tab === 'mileage' ? tabActiveClass : tabInactiveClass;
+
+      // 섹션 뷰 전환
+      scheduleSection.classList.toggle('hidden', tab !== 'schedule');
+      tasksSection.classList.toggle('hidden', tab !== 'tasks');
+      gradesSection.classList.toggle('hidden', tab !== 'grades');
+      mileageSection.classList.toggle('hidden', tab !== 'mileage');
+
+      // 상단 요약 바 전환
+      scheduleSummaryBar.classList.toggle('hidden', tab !== 'schedule');
+      scheduleSummaryBar.classList.toggle('grid', tab === 'schedule');
+
+      tasksSummaryBar.classList.toggle('hidden', tab !== 'tasks');
+      tasksSummaryBar.classList.toggle('grid', tab === 'tasks');
+
+      gradesSummaryBar.classList.toggle('hidden', tab !== 'grades');
+      gradesSummaryBar.classList.toggle('grid', tab === 'grades');
+
+      mileageSummaryBar.classList.toggle('hidden', tab !== 'mileage');
+      mileageSummaryBar.classList.toggle('grid', tab === 'mileage');
+
+      assignmentHeaderControls.classList.toggle('hidden', tab !== 'tasks');
+
+      // 하단 액션 버튼 텍스트 변경
+      if (tab === 'schedule') {
+        mainActionText.textContent = '새 수업·과목 일정 등록하기';
+      } else if (tab === 'tasks') {
+        mainActionText.textContent = '새 과제·일정 추가하기';
+      } else if (tab === 'grades') {
+        mainActionText.textContent = '새 수강 과목 성적 추가';
+      } else {
+        mainActionText.textContent = '새 마일리지 등록하기';
+      }
+    }
+
+    tabScheduleBtn.addEventListener('click', () => switchTab('schedule'));
+    tabTasksBtn.addEventListener('click', () => switchTab('tasks'));
+    tabGradesBtn.addEventListener('click', () => switchTab('grades'));
+    tabMileageBtn.addEventListener('click', () => switchTab('mileage'));
+
+    // 하단 버튼 클릭 -> 현재 탭에 맞는 모달 띄우기
+    mainActionBtn.addEventListener('click', () => {
+      if (activeTab === 'schedule') {
+        addScheduleModal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        document.getElementById('schedSubject').focus();
+      } else if (activeTab === 'tasks') {
+        addTaskModal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        document.getElementById('taskSubject').focus();
+      } else if (activeTab === 'grades') {
+        addGradeModal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        document.getElementById('gradeSubject').focus();
+      } else {
+        addMileageModal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        document.getElementById('mileageTitle').focus();
+      }
+    });
+
+    // 모달 닫기
+    function closeScheduleModal() {
+      addScheduleModal.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+      scheduleForm.reset();
+    }
+
+    function closeTaskModal() {
+      addTaskModal.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+      taskForm.reset();
+      updateDateHeader();
+    }
+
+    function closeGradeModal() {
+      addGradeModal.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+      gradeForm.reset();
+    }
+
+    function closeMileageModal() {
+      addMileageModal.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+      mileageForm.reset();
+      updateDateHeader();
+    }
+
+    closeScheduleModalBtn.addEventListener('click', closeScheduleModal);
+    closeTaskModalBtn.addEventListener('click', closeTaskModal);
+    closeGradeModalBtn.addEventListener('click', closeGradeModal);
+    closeMileageModalBtn.addEventListener('click', closeMileageModal);
+
+    addScheduleModal.addEventListener('click', (e) => { if (e.target === addScheduleModal) closeScheduleModal(); });
+    addTaskModal.addEventListener('click', (e) => { if (e.target === addTaskModal) closeTaskModal(); });
+    addGradeModal.addEventListener('click', (e) => { if (e.target === addGradeModal) closeGradeModal(); });
+    addMileageModal.addEventListener('click', (e) => { if (e.target === addMileageModal) closeMileageModal(); });
+
+    // ESC 닫기
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeScheduleModal();
+        closeTaskModal();
+        closeGradeModal();
+        closeMileageModal();
+      }
+    });
+
+    // 수업 폼 제출
+    scheduleForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const category = document.querySelector('input[name="courseCategory"]:checked')?.value || 'regular';
+      const subject = document.getElementById('schedSubject').value.trim();
+      const day = document.getElementById('schedDay').value;
+      const room = document.getElementById('schedRoom').value.trim();
+      const startTime = document.getElementById('schedStartTime').value;
+      const endTime = document.getElementById('schedEndTime').value;
+      const instructor = document.getElementById('schedInstructor').value.trim();
+
+      if (!subject || !day || !room || !startTime || !endTime) {
+        showToast('필수 항목을 모두 입력해 주세요.');
+        return;
+      }
+
+      const newSchedule = {
+        id: 'sched_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        category,
+        subject,
+        day,
+        room,
+        startTime,
+        endTime,
+        instructor
+      };
+
+      schedules.push(newSchedule);
+      saveAll();
+      renderSchedule();
+      closeScheduleModal();
+      showToast('새 수업 일정이 등록되었습니다!');
+    });
+
+    // 수업 삭제 핸들러
+    window.deleteSchedule = function(id) {
+      schedules = schedules.filter(s => s.id !== id);
+      saveAll();
+      renderSchedule();
+      showToast('수업 일정이 삭제되었습니다.');
+    };
+
+    // 과제 폼 제출
+    taskForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const itemType = document.querySelector('input[name="itemType"]:checked')?.value || 'assignment';
+      const subject = document.getElementById('taskSubject').value.trim();
+      const title = document.getElementById('taskTitle').value.trim();
+      const dueDate = document.getElementById('taskDueDate').value;
+      const dueTime = document.getElementById('taskDueTime').value || '23:59';
+      const priority = document.querySelector('input[name="priority"]:checked').value;
+
+      if (!subject || !dueDate) {
+        showToast('과목명과 마감일을 입력해 주세요.');
+        return;
+      }
+
+      const newTask = {
+        id: 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        type: itemType,
+        subject,
+        title,
+        dueDate,
+        dueTime,
+        priority,
+        completed: false,
+        createdAt: Date.now()
+      };
+
+      assignments.unshift(newTask);
+      saveAll();
+      renderTasks();
+      closeTaskModal();
+      showToast('새 일정이 등록되었습니다!');
+    });
+
+    // 성적 폼 제출
+    gradeForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const subject = document.getElementById('gradeSubject').value.trim();
+      const type = document.getElementById('gradeType').value;
+      const credits = parseFloat(document.getElementById('gradeCredits').value);
+      const grade = document.getElementById('gradeValue').value;
+      const rawScore = document.getElementById('gradeScore').value;
+
+      if (!subject || !credits || !grade) {
+        showToast('과목명, 학점, 등급을 모두 입력해 주세요.');
+        return;
+      }
+
+      const newGrade = {
+        id: 'grade_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        subject,
+        type,
+        credits,
+        grade,
+        rawScore: rawScore ? parseInt(rawScore, 10) : null
+      };
+
+      grades.push(newGrade);
+      saveAll();
+      renderGrades();
+      closeGradeModal();
+      showToast('과목 성적이 등록되었습니다!');
+    });
+
+    // 마일리지 폼 제출
+    mileageForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const category = document.querySelector('input[name="mileageCategory"]:checked')?.value || 'academic';
+      const title = document.getElementById('mileageTitle').value.trim();
+      const points = parseInt(document.getElementById('mileagePoints').value, 10);
+      const date = document.getElementById('mileageDate').value || new Date().toISOString().split('T')[0];
+
+      if (!title || isNaN(points) || points <= 0) {
+        showToast('활동명과 유효한 점수를 입력해 주세요.');
+        return;
+      }
+
+      const newMileage = {
+        id: 'mile_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        category,
+        title,
+        points,
+        date
+      };
+
+      mileages.unshift(newMileage);
+      saveAll();
+      renderMileage();
+      closeMileageModal();
+      showToast(`${points} 마일리지가 등록되었습니다!`);
+    });
+
+    // 과제 액션 핸들러
+    window.toggleComplete = function(id) {
+      assignments = assignments.map(item => {
+        if (item.id === id) {
+          const next = !item.completed;
+          showToast(next ? '일정을 완료 처리했습니다! 🎉' : '일정을 진행 중으로 변경했습니다.');
+          return { ...item, completed: next };
+        }
+        return item;
+      });
+      saveAll();
+      renderTasks();
+    };
+
+    window.deleteTask = function(id) {
+      assignments = assignments.filter(i => i.id !== id);
+      saveAll();
+      renderTasks();
+      showToast('일정이 삭제되었습니다.');
+    };
+
+    // 성적 삭제 핸들러
+    window.deleteGrade = function(id) {
+      grades = grades.filter(i => i.id !== id);
+      saveAll();
+      renderGrades();
+      showToast('해당 과목 성적이 삭제되었습니다.');
+    };
+
+    // 마일리지 삭제 핸들러
+    window.deleteMileage = function(id) {
+      mileages = mileages.filter(i => i.id !== id);
+      saveAll();
+      renderMileage();
+      showToast('마일리지 내역이 삭제되었습니다.');
+    };
+
+    // 정렬 토글
+    sortToggleBtn.addEventListener('click', () => {
+      if (currentSort === 'deadline') {
+        currentSort = 'created';
+        sortLabel.textContent = '최신등록순';
+      } else {
+        currentSort = 'deadline';
+        sortLabel.textContent = '마감임박순';
+      }
+      renderTasks();
+    });
+
+    // 필터 버튼
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => {
+          b.classList.remove('bg-white', 'text-indigo-700', 'shadow-sm', 'font-semibold');
+          b.classList.add('text-slate-500', 'font-medium');
+        });
+        btn.classList.add('bg-white', 'text-indigo-700', 'shadow-sm', 'font-semibold');
+        btn.classList.remove('text-slate-500', 'font-medium');
+        currentFilter = btn.dataset.filter;
+        renderTasks();
+      });
+    });
+
+    // 학점 기준 (4.5 / 4.3) 변경
+    gradeScaleSelect.addEventListener('change', (e) => {
+      gradeScale = e.target.value;
+      saveAll();
+      renderGrades();
+    });
+
+    // 앱 초기화
+    function init() {
+      updateDateHeader();
+
+      try {
+        const storedSched = localStorage.getItem(STORAGE_KEY_SCHEDULE);
+        schedules = storedSched ? JSON.parse(storedSched) : getInitialSchedule();
+
+        const storedTasks = localStorage.getItem(STORAGE_KEY_TASKS);
+        assignments = storedTasks ? JSON.parse(storedTasks) : getInitialTasks();
+
+        const storedGrades = localStorage.getItem(STORAGE_KEY_GRADES);
+        grades = storedGrades ? JSON.parse(storedGrades) : getInitialGrades();
+
+        const storedMileage = localStorage.getItem(STORAGE_KEY_MILEAGE);
+        mileages = storedMileage ? JSON.parse(storedMileage) : getInitialMileage();
+
+        const storedScale = localStorage.getItem(STORAGE_KEY_SCALE);
+        if (storedScale) {
+          gradeScale = storedScale;
+          gradeScaleSelect.value = storedScale;
+        }
+
+        saveAll();
+      } catch (e) {
+        console.warn('초기화 에러', e);
+        schedules = getInitialSchedule();
+        assignments = getInitialTasks();
+        grades = getInitialGrades();
+        mileages = getInitialMileage();
+      }
+
+      renderSchedule();
+      renderTasks();
+      renderGrades();
+      renderMileage();
+
+      // 시간 경과에 따른 실시간 수업 상태 자동 갱신 (1분 주기)
+      setInterval(() => {
+        updateDateHeader();
+        renderSchedule();
+      }, 60000);
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
